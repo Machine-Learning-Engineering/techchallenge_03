@@ -14,17 +14,12 @@ import psycopg2
 from sqlalchemy import create_engine, text, inspect
 from dotenv import load_dotenv
 
-# Configuração de logging
-# Criar diretório de logs se não existir
-log_dir = Path('log')
-log_dir.mkdir(exist_ok=True)
-
+# Configuração de logging - apenas terminal
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(log_dir / 'persistencia.log')
+        logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger(__name__)

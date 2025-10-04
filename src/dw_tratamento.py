@@ -18,17 +18,12 @@ from datetime import datetime, time
 import warnings
 warnings.filterwarnings('ignore')
 
-# Configuração de logging
-# Criar diretório de logs se não existir
-log_dir = Path('log')
-log_dir.mkdir(exist_ok=True)
-
+# Configuração de logging - apenas terminal
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(log_dir / 'dw_tratamento.log')
+        logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger(__name__)

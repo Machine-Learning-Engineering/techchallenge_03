@@ -15,7 +15,7 @@ import json
 import os
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import uvicorn
@@ -31,17 +31,12 @@ except ImportError as e:
     CoffeeSalesPersistencia = None
     DataWarehouseTratamento = None
 
-# Configuração de logging
-# Criar diretório de logs se não existir
-log_dir = Path('log')
-log_dir.mkdir(exist_ok=True)
-
+# Configuração de logging - apenas terminal
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(log_dir / 'api.log')
+        logging.StreamHandler(sys.stdout)
     ]
 )
 logger = logging.getLogger('api')
@@ -59,7 +54,6 @@ app = FastAPI(
     * **📥 Data Upload**: Download do dataset do Kaggle
     * **💾 Persistência**: Carregamento dos dados no PostgreSQL
     * **🏗️ Data Warehouse**: Tratamento e criação do DW
-    * ** Logs**: Visualização de logs dos processos
     
     ### Pipeline Completo:
     1. `POST /data-upload/` - Baixa os dados do Kaggle
@@ -394,72 +388,6 @@ async def execute_pipeline(request: PipelineRequest, background_tasks: Backgroun
         message="Pipeline completo iniciado em background",
         steps=steps
     )
-
-@app.get("/logs/", tags=["Logs"])
-async def get_all_logs():
-    """
-    Obtém todos os logs do diretório log/
-    """
-    log_dir = Path("log")
-    
-    if not log_dir.exists():
-        return {"message": "Log directory not found"}
-    
-    # Buscar todos os arquivos .log no diretório
-    log_files = list(log_dir.glob("*.log"))
-    
-    if not log_files:
-        return {"message": "No log files found"}
-    
-    # Coletar conteúdo de todos os logs
-    all_logs = {}
-    
-    for log_file in sorted(log_files):
-        try:
-            with open(log_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-                all_logs[log_file.name] = {
-                    "file": log_file.name,
-                    "size": log_file.stat().st_size,
-                    "modified": datetime.fromtimestamp(log_file.stat().st_mtime).isoformat(),
-                    "content": content
-                }
-        except Exception as e:
-            all_logs[log_file.name] = {
-                "file": log_file.name,
-                "error": f"Erro ao ler arquivo: {str(e)}"
-            }
-    
-    return {
-        "log_directory": str(log_dir),
-        "total_files": len(log_files),
-        "files": list(all_logs.keys()),
-        "logs": all_logs
-    }
-
-@app.get("/logs/{log_filename}", tags=["Logs"])
-async def get_specific_log(log_filename: str):
-    """
-    Baixa um arquivo de log específico
-    """
-    log_dir = Path("log")
-    log_file = log_dir / log_filename
-    
-    # Validação de segurança - só permite arquivos .log
-    if not log_filename.endswith('.log'):
-        raise HTTPException(status_code=400, detail="Apenas arquivos .log são permitidos")
-    
-    # Verificar se o arquivo existe
-    if not log_file.exists() or not log_file.is_file():
-        raise HTTPException(status_code=404, detail=f"Arquivo de log '{log_filename}' não encontrado")
-    
-    # Verificar se está dentro do diretório log (segurança)
-    try:
-        log_file.resolve().relative_to(log_dir.resolve())
-    except ValueError:
-        raise HTTPException(status_code=403, detail="Acesso negado ao arquivo")
-    
-    return FileResponse(log_file, media_type="text/plain", filename=log_filename)
 
 # Função principal para executar a API
 def main():
