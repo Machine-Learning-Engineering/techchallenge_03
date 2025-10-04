@@ -1,0 +1,7 @@
+# Core dependencies for data download and processing
+kagglehub[pandas-datasets]>=0.2.0
+pandas>=1.5.0
+numpy>=1.21.0
+
+# Utilities
+pathlib2>=2.3.7
