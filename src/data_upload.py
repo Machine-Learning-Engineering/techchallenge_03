@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class SpotifyDataDownloader:
     """Classe para gerenciar o download e carregamento do dataset do Spotify"""
     
-    def __init__(self, dataset_name: str = 'bricevergnou/spotify-recommendation'):
+    def __init__(self, dataset_name: str = 'minahilfatima12328/daily-coffee-transactions'):
         """
         Inicializa o downloader
         
@@ -83,7 +83,7 @@ class SpotifyDataDownloader:
         """
         try:
             source_dir = Path(source_path)
-            local_data_dir = self.data_dir / 'spotify_dataset'
+            local_data_dir = self.data_dir / 'coffee_dataset'
             
             # Criar diretório local se não existir
             local_data_dir.mkdir(parents=True, exist_ok=True)
