@@ -38,29 +38,19 @@ services:
     command: >
       sh -c "
         echo '🔧 Inicializando banco PostgreSQL do Tech Challenge 03...' &&
-        psql -h postgres -U admin -d techchallenge03 -c \"CREATE EXTENSION IF NOT EXISTS uuid-ossp;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"CREATE EXTENSION IF NOT EXISTS pgcrypto;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"CREATE SCHEMA IF NOT EXISTS coffee_sales;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"CREATE SCHEMA IF NOT EXISTS dw;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA coffee_sales TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA coffee_sales TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA coffee_sales TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA dw TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA dw TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA dw TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA coffee_sales GRANT ALL ON TABLES TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA coffee_sales GRANT ALL ON SEQUENCES TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA coffee_sales GRANT ALL ON FUNCTIONS TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA dw GRANT ALL ON TABLES TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA dw GRANT ALL ON SEQUENCES TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA dw GRANT ALL ON FUNCTIONS TO admin;\" &&
-        psql -h postgres -U admin -d techchallenge03 -c \"SELECT 'Inicialização do banco concluída com sucesso!' as message;\" &&
+        echo '📦 Tentando instalar extensões (opcional)...' &&
+        (psql -h postgres -U admin -d techchallenge03 -c 'CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";' || echo '⚠️ uuid-ossp não disponível - continuando sem ela') &&
+        (psql -h postgres -U admin -d techchallenge03 -c 'CREATE EXTENSION IF NOT EXISTS pgcrypto;' || echo '⚠️ pgcrypto não disponível - continuando sem ela') &&
+        echo ' Configurando permissões do schema public...' &&
+        psql -h postgres -U admin -d techchallenge03 -c 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;' &&
+        psql -h postgres -U admin -d techchallenge03 -c 'GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO admin;' &&
+        psql -h postgres -U admin -d techchallenge03 -c 'GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO admin;' &&
+        echo '⚙️ Configurando privilégios padrão do schema public...' &&
+        psql -h postgres -U admin -d techchallenge03 -c 'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO admin;' &&
+        psql -h postgres -U admin -d techchallenge03 -c 'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO admin;' &&
+        psql -h postgres -U admin -d techchallenge03 -c 'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO admin;' &&
+        echo '🧪 Testando conexão final...' &&
+        psql -h postgres -U admin -d techchallenge03 -c 'SELECT current_database(), current_user, current_schema(), now() as initialization_time;' &&
         echo '✅ Inicialização do banco PostgreSQL concluída!'
       "
     restart: "no"
