@@ -106,55 +106,65 @@ Acesse a documentação interativa da API:
 #### 1. Pipeline Completo (Recomendado)
 ```bash
 # Executar todo o pipeline automaticamente
-curl -X POST "http://localhost:8000/pipeline/execute" \
-     -H "Content-Type: application/json"
+curl -X 'POST' \
+  'http://localhost:8000/pipeline/execute' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "force_download": false,
+  "recreate_tables": false
+}'
 ```
 
 #### 2. Execução Passo a Passo
 
 **Download dos Dados:**
 ```bash
-curl -X POST "http://localhost:8000/data-upload/" \
-     -H "Content-Type: application/json" \
-     -d '{"force_download": false}'
+curl -X 'POST' \
+  'http://localhost:8000/data-upload/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "force_download": false,
+  "copy_to_local": true
+}'
 ```
 
 **Persistência no PostgreSQL:**
 ```bash
-curl -X POST "http://localhost:8000/persistencia/" \
-     -H "Content-Type: application/json" \
-     -d '{"force_reload": false}'
+curl -X 'POST' \
+  'http://localhost:8000/persistencia/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "recreate_table": false,
+  "batch_size": 1000
+}'
 ```
 
 **Criação do Data Warehouse:**
 ```bash
-curl -X POST "http://localhost:8000/dw-tratamento/" \
-     -H "Content-Type: application/json" \
-     -d '{"force_rebuild": false}'
-```
-
-#### 3. Verificação de Status
-```bash
-# Status da API
-curl -X GET "http://localhost:8000/"
-
-# Saúde da aplicação
-curl -X GET "http://localhost:8000/health"
+curl -X 'POST' \
+  'http://localhost:8000/dw-tratamento/' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "recreate_dw": false,
+  "apply_transformations": true
+}'
 ```
 
 ## 📓 Como Executar o Notebook
 
 ### 1. Acessar Jupyter Notebook
-Abra seu navegador em: **http://localhost:8888**
+Abra seu navegador em: **http://localhost:8888/notebooks/analise_dw_coffee_llm.ipynb**
 
-### 2. Abrir o Notebook Principal
-Navegue até: `src/analise_dw_coffee_llm.ipynb`
 
-### 3. Executar Análise
-1. **Execute todas as células** usando `Cell → Run All`
-2. **Ou execute passo a passo** usando `Shift + Enter`
+### 2. Executar Análise
+1. **Execute todas as células** usando `Run → Run All Cell`
 
-### 4. Requisitos Importantes
+
+### 3. Requisitos Importantes
 - **Certifique-se** que o pipeline da API foi executado primeiro
 - **Verifique** se a tabela `dw_coffee` existe no PostgreSQL
 - **Aguarde** o carregamento completo dos dados (3.547 registros)
