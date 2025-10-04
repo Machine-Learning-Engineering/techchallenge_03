@@ -32,12 +32,16 @@ except ImportError as e:
     DataWarehouseTratamento = None
 
 # Configuração de logging
+# Criar diretório de logs se não existir
+log_dir = Path('log')
+log_dir.mkdir(exist_ok=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('api.log')
+        logging.FileHandler(log_dir / 'api.log')
     ]
 )
 logger = logging.getLogger('api')
@@ -55,14 +59,12 @@ app = FastAPI(
     * **📥 Data Upload**: Download do dataset do Kaggle
     * **💾 Persistência**: Carregamento dos dados no PostgreSQL
     * **🏗️ Data Warehouse**: Tratamento e criação do DW
-    * **📊 Status**: Monitoramento dos processos
-    * **📋 Logs**: Visualização de logs dos processos
+    * ** Logs**: Visualização de logs dos processos
     
     ### Pipeline Completo:
     1. `POST /data-upload/` - Baixa os dados do Kaggle
     2. `POST /persistencia/` - Carrega dados no PostgreSQL (tabela coffee_sales)
     3. `POST /dw-tratamento/` - Cria Data Warehouse (tabela dw_coffee)
-    4. `GET /status/` - Monitora status dos processos
     
     ### Execução Automatizada:
     * `POST /pipeline/execute` - Executa todo o pipeline automaticamente
@@ -91,16 +93,6 @@ app.add_middleware(
 running_tasks: Dict[str, Dict[str, Any]] = {}
 
 # Modelos Pydantic para requests/responses
-class TaskStatus(BaseModel):
-    """Status de uma tarefa"""
-    task_id: str = Field(..., description="ID único da tarefa")
-    status: str = Field(..., description="Status atual da tarefa")
-    started_at: datetime = Field(..., description="Timestamp de início")
-    completed_at: Optional[datetime] = Field(None, description="Timestamp de conclusão")
-    success: Optional[bool] = Field(None, description="Se a tarefa foi bem-sucedida")
-    message: Optional[str] = Field(None, description="Mensagem de status")
-    details: Optional[Dict[str, Any]] = Field(None, description="Detalhes adicionais")
-
 class DataUploadRequest(BaseModel):
     """Request para download de dados"""
     force_download: bool = Field(False, description="Forçar download mesmo se já existir")
@@ -145,15 +137,6 @@ class PipelineResponse(BaseModel):
     status: str = Field(..., description="Status inicial")
     message: str = Field(..., description="Mensagem")
     steps: List[str] = Field(..., description="Lista de etapas do pipeline")
-
-class SystemStatusResponse(BaseModel):
-    """Response do status do sistema"""
-    system_status: str = Field(..., description="Status geral do sistema")
-    active_tasks: int = Field(..., description="Número de tarefas ativas")
-    completed_tasks: int = Field(..., description="Número de tarefas concluídas")
-    failed_tasks: int = Field(..., description="Número de tarefas falhas")
-    database_connection: bool = Field(..., description="Status da conexão com banco")
-    dataset_available: bool = Field(..., description="Se dataset está disponível")
 
 # Funções auxiliares
 def generate_task_id(prefix: str) -> str:
@@ -209,37 +192,6 @@ async def run_subprocess(command: List[str], task_id: str, description: str) -> 
         return False
 
 # Endpoints da API
-
-@app.get("/", tags=["Sistema"])
-async def root():
-    """
-    Endpoint raiz - informações da API
-    """
-    return {
-        "message": "Tech Challenge 03 - Coffee Sales API",
-        "version": "1.0.0",
-        "status": "running",
-        "endpoints": {
-            "data_upload": "/data-upload/",
-            "persistencia": "/persistencia/",
-            "dw_tratamento": "/dw-tratamento/",
-            "pipeline": "/pipeline/execute",
-            "status": "/status/",
-            "docs": "/docs",
-            "redoc": "/redoc"
-        }
-    }
-
-@app.get("/health", tags=["Sistema"])
-async def health_check():
-    """
-    Health check da API
-    """
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now(),
-        "system": "operational"
-    }
 
 @app.post("/data-upload/", response_model=DataUploadResponse, tags=["Data Upload"])
 async def data_upload(request: DataUploadRequest, background_tasks: BackgroundTasks):
@@ -443,126 +395,71 @@ async def execute_pipeline(request: PipelineRequest, background_tasks: Backgroun
         steps=steps
     )
 
-@app.get("/tasks/{task_id}", response_model=TaskStatus, tags=["Status"])
-async def get_task_status(task_id: str):
-    """
-    Obtém status de uma tarefa específica
-    """
-    if task_id not in running_tasks:
-        raise HTTPException(status_code=404, detail=f"Tarefa {task_id} não encontrada")
-    
-    task_data = running_tasks[task_id]
-    return TaskStatus(**task_data)
-
-@app.get("/tasks/", tags=["Status"])
-async def list_tasks():
-    """
-    Lista todas as tarefas (ativas e concluídas)
-    """
-    tasks = []
-    for task_id, task_data in running_tasks.items():
-        tasks.append(TaskStatus(**task_data))
-    
-    return {
-        "total_tasks": len(tasks),
-        "tasks": tasks
-    }
-
-@app.get("/status/", response_model=SystemStatusResponse, tags=["Status"])
-async def system_status():
-    """
-    Status geral do sistema e processos
-    """
-    # Contar tarefas por status
-    active_tasks = sum(1 for t in running_tasks.values() if t["status"] in ["started", "running"])
-    completed_tasks = sum(1 for t in running_tasks.values() if t["status"] == "completed")
-    failed_tasks = sum(1 for t in running_tasks.values() if t["status"] == "failed")
-    
-    # Verificar conexão com banco
-    database_connection = False
-    try:
-        if CoffeeSalesPersistencia:
-            persistencia = CoffeeSalesPersistencia()
-            database_connection = persistencia.test_connection()
-    except Exception:
-        database_connection = False
-    
-    # Verificar se dataset está disponível
-    dataset_available = Path('data/coffee_dataset/Coffe_sales.csv').exists()
-    
-    # Determinar status geral
-    if active_tasks > 0:
-        system_status = "processing"
-    elif failed_tasks > 0 and completed_tasks == 0:
-        system_status = "error"
-    elif not database_connection:
-        system_status = "database_error"
-    else:
-        system_status = "ready"
-    
-    return SystemStatusResponse(
-        system_status=system_status,
-        active_tasks=active_tasks,
-        completed_tasks=completed_tasks,
-        failed_tasks=failed_tasks,
-        database_connection=database_connection,
-        dataset_available=dataset_available
-    )
-
-@app.get("/logs/{task_id}", tags=["Logs"])
-async def get_task_logs(task_id: str):
-    """
-    Obtém logs detalhados de uma tarefa
-    """
-    if task_id not in running_tasks:
-        raise HTTPException(status_code=404, detail=f"Tarefa {task_id} não encontrada")
-    
-    task_data = running_tasks[task_id]
-    details = task_data.get("details", {})
-    
-    return {
-        "task_id": task_id,
-        "status": task_data["status"],
-        "logs": {
-            "stdout": details.get("stdout", ""),
-            "stderr": details.get("stderr", ""),
-            "return_code": details.get("return_code")
-        }
-    }
-
 @app.get("/logs/", tags=["Logs"])
-async def get_api_logs():
+async def get_all_logs():
     """
-    Obtém logs da API
+    Obtém todos os logs do diretório log/
     """
-    log_file = Path("api.log")
-    if log_file.exists():
-        return FileResponse(log_file, media_type="text/plain", filename="api.log")
-    else:
-        return {"message": "Log file not found"}
-
-@app.delete("/tasks/clear", tags=["Sistema"])
-async def clear_completed_tasks():
-    """
-    Limpa tarefas concluídas da memória
-    """
-    global running_tasks
+    log_dir = Path("log")
     
-    completed_count = 0
-    new_tasks = {}
+    if not log_dir.exists():
+        return {"message": "Log directory not found"}
     
-    for task_id, task_data in running_tasks.items():
-        if task_data["status"] in ["started", "running"]:
-            new_tasks[task_id] = task_data
-        else:
-            completed_count += 1
+    # Buscar todos os arquivos .log no diretório
+    log_files = list(log_dir.glob("*.log"))
     
-    running_tasks = new_tasks
+    if not log_files:
+        return {"message": "No log files found"}
+    
+    # Coletar conteúdo de todos os logs
+    all_logs = {}
+    
+    for log_file in sorted(log_files):
+        try:
+            with open(log_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+                all_logs[log_file.name] = {
+                    "file": log_file.name,
+                    "size": log_file.stat().st_size,
+                    "modified": datetime.fromtimestamp(log_file.stat().st_mtime).isoformat(),
+                    "content": content
+                }
+        except Exception as e:
+            all_logs[log_file.name] = {
+                "file": log_file.name,
+                "error": f"Erro ao ler arquivo: {str(e)}"
+            }
     
     return {
-        "message": f"Limpeza concluída. {completed_count} tarefas removidas.",
-        "remaining_tasks": len(running_tasks)
+        "log_directory": str(log_dir),
+        "total_files": len(log_files),
+        "files": list(all_logs.keys()),
+        "logs": all_logs
     }
+
+@app.get("/logs/{log_filename}", tags=["Logs"])
+async def get_specific_log(log_filename: str):
+    """
+    Baixa um arquivo de log específico
+    """
+    log_dir = Path("log")
+    log_file = log_dir / log_filename
+    
+    # Validação de segurança - só permite arquivos .log
+    if not log_filename.endswith('.log'):
+        raise HTTPException(status_code=400, detail="Apenas arquivos .log são permitidos")
+    
+    # Verificar se o arquivo existe
+    if not log_file.exists() or not log_file.is_file():
+        raise HTTPException(status_code=404, detail=f"Arquivo de log '{log_filename}' não encontrado")
+    
+    # Verificar se está dentro do diretório log (segurança)
+    try:
+        log_file.resolve().relative_to(log_dir.resolve())
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Acesso negado ao arquivo")
+    
+    return FileResponse(log_file, media_type="text/plain", filename=log_filename)
 
 # Função principal para executar a API
 def main():

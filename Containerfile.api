@@ -1,0 +1,39 @@
+# Dockerfile para a API do Tech Challenge 03
+FROM python:3.11-slim
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar requirements.txt
+COPY src/requirements.txt .
+
+# Instalar dependências Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Criar diretórios necessários com permissões corretas
+RUN mkdir -p /app/log /app/data /app/src && \
+    chmod 755 /app/log /app/data /app/src
+
+# Copiar código da aplicação e script de inicialização
+COPY src/ ./src/
+COPY start-api.sh /app/start-api.sh
+
+# Criar __init__.py para tornar src um pacote Python
+RUN touch /app/src/__init__.py
+
+# Ajustar permissões finais
+RUN chmod -R 755 /app/src && \
+    chmod 777 /app/log /app/data && \
+    chmod +x /app/start-api.sh
+
+# Expor portas da API e Jupyter
+EXPOSE 8000 8888
+
+# Comando padrão usa o script de inicialização
+CMD ["/app/start-api.sh"]

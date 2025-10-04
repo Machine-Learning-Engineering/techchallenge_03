@@ -1,0 +1,21 @@
+# Container PostgreSQL para Tech Challenge 03
+FROM postgres:15-alpine
+
+# Definir variáveis de ambiente
+ENV POSTGRES_DB=techchallenge03
+ENV POSTGRES_USER=admin
+ENV POSTGRES_PASSWORD=admin123
+ENV PGDATA=/var/lib/postgresql/data/pgdata
+
+# Criar diretório para dados e definir permissões
+RUN mkdir -p /var/lib/postgresql/data/pgdata && \
+    chown -R postgres:postgres /var/lib/postgresql/data
+
+# Expor porta padrão do PostgreSQL
+EXPOSE 5432
+
+# Configurar volume para persistência de dados
+VOLUME ["/var/lib/postgresql/data"]
+
+# Comando para iniciar o PostgreSQL
+CMD ["postgres"]

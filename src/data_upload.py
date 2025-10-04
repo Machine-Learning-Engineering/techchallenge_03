@@ -13,12 +13,16 @@ import kagglehub
 from kagglehub import KaggleDatasetAdapter
 
 # Configuração de logging
+# Criar diretório de logs se não existir
+log_dir = Path('log')
+log_dir.mkdir(exist_ok=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('data_upload.log')
+        logging.FileHandler(log_dir / 'data_upload.log')
     ]
 )
 logger = logging.getLogger(__name__)

@@ -1,0 +1,105 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: techchallenge03-postgres
+    environment:
+      POSTGRES_DB: techchallenge03
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      PGDATA: /var/lib/postgresql/data/pgdata
+      # Configurar para não exigir autenticação para conexões locais
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Remover init.sql para evitar problemas de permissão
+      # As tabelas serão criadas pelos scripts Python conforme necessário
+    networks:
+      - techchallenge03-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d techchallenge03"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db-init:
+    image: postgres:15-alpine
+    container_name: techchallenge03-db-init
+    environment:
+      - PGPASSWORD=admin123
+    networks:
+      - techchallenge03-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo '🔧 Inicializando banco PostgreSQL do Tech Challenge 03...' &&
+        psql -h postgres -U admin -d techchallenge03 -c \"CREATE EXTENSION IF NOT EXISTS uuid-ossp;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"CREATE EXTENSION IF NOT EXISTS pgcrypto;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"CREATE SCHEMA IF NOT EXISTS coffee_sales;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"CREATE SCHEMA IF NOT EXISTS dw;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA coffee_sales TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA coffee_sales TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA coffee_sales TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA dw TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA dw TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA dw TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA coffee_sales GRANT ALL ON TABLES TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA coffee_sales GRANT ALL ON SEQUENCES TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA coffee_sales GRANT ALL ON FUNCTIONS TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA dw GRANT ALL ON TABLES TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA dw GRANT ALL ON SEQUENCES TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA dw GRANT ALL ON FUNCTIONS TO admin;\" &&
+        psql -h postgres -U admin -d techchallenge03 -c \"SELECT 'Inicialização do banco concluída com sucesso!' as message;\" &&
+        echo '✅ Inicialização do banco PostgreSQL concluída!'
+      "
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Containerfile.api
+    container_name: coffee-api
+    environment:
+      - POSTGRES_DB=techchallenge03
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin123
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "8000:8000"
+      - "8888:8888"
+    volumes:
+      - api_logs:/app/log
+      - api_data:/app/data
+    networks:
+      - techchallenge03-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  api_logs:
+    driver: local
+  api_data:
+    driver: local
+
+networks:
+  techchallenge03-network:
+    driver: bridge

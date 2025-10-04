@@ -1,0 +1,36 @@
+# Dados do PostgreSQL
+postgres_data/
+*.sql
+backup*.sql
+
+# Logs centralizados na pasta log/
+src/log/
+*.log
+
+# Manter estrutura da pasta log mas não os arquivos
+!src/log/
+!src/log/.gitkeep
+
+# Dados baixados ficam versionados (são pequenos e importantes)
+# src/data/ - COMENTADO para manter os dados versionados
+
+# Arquivos de configuração sensíveis
+env
+
+# Docker
+.docker/
+
+# Arquivos temporários
+*.tmp
+*.bak
+*.swp
+*~
+*.log 
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*

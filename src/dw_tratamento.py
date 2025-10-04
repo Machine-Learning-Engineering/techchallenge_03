@@ -19,12 +19,16 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Configuração de logging
+# Criar diretório de logs se não existir
+log_dir = Path('log')
+log_dir.mkdir(exist_ok=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('dw_tratamento.log')
+        logging.FileHandler(log_dir / 'dw_tratamento.log')
     ]
 )
 logger = logging.getLogger(__name__)

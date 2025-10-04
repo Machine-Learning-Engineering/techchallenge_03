@@ -1,0 +1,2 @@
+# Este arquivo mantém a pasta log no controle de versão
+# Os arquivos de log são ignorados pelo .gitignore, mas a estrutura da pasta é preservada
