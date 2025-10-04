@@ -1,12 +1,81 @@
-# Core dependencies for data download and processing
-kagglehub[pandas-datasets]>=0.2.0
+# ========================================================================
+# DEPENDÊNCIAS PARA PROJETO TECHCHALLENGE_03
+# Data Warehouse Analysis - Coffee Sales com LLM  
+# Baseado no notebook: analise_dw_coffee_llm.ipynb
+# ========================================================================
+
+# ANÁLISE DE DADOS PRINCIPAIS
 pandas>=1.5.0
 numpy>=1.21.0
 
-# Database dependencies
+# CONEXÃO COM BANCO DE DADOS
 psycopg2-binary>=2.9.0
 sqlalchemy>=1.4.0
 
-# Environment and utilities
+# VISUALIZAÇÕES
+matplotlib>=3.5.0
+seaborn>=0.11.0
+plotly>=5.0.0
+kaleido>=0.2.1
+
+# JUPYTER NOTEBOOK E AMBIENTE INTERATIVO
+jupyter>=1.0.0
+ipykernel>=6.0.0
+ipywidgets>=7.6.0
+nbformat
+
+# PROCESSAMENTO DE TEMPO E DATA
+python-dateutil>=2.8.0
+
+# DOWNLOAD DE DATASETS (OPCIONAL)
+kagglehub>=0.2.0
+
+# API REST E SERVIDOR WEB
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+
+# VARIÁVEIS DE AMBIENTE
 python-dotenv>=1.0.0
-pathlib2>=2.3.7
+
+nbformat>=4.2.0
+
+# ========================================================================
+# BIBLIOTECAS IDENTIFICADAS NO NOTEBOOK analise_dw_coffee_llm.ipynb:
+# ========================================================================
+# 
+# IMPORTAÇÕES EXPLÍCITAS ENCONTRADAS:
+# - pandas (análise e manipulação de dados)
+# - numpy (computação numérica e arrays)
+# - matplotlib.pyplot (visualizações básicas)
+# - seaborn (visualizações estatísticas avançadas)
+# - datetime, timedelta (manipulação de data e hora)
+# - warnings (controle de mensagens de aviso)
+# - psycopg2 (driver PostgreSQL)
+# - sqlalchemy (ORM e conexão com banco de dados)
+# - plotly.express (gráficos interativos)
+# - plotly.graph_objects (objetos gráficos do plotly)
+# - plotly.subplots (subplots interativos)
+# - plotly.io (configurações do plotly)
+# - plotly.offline (modo offline do plotly)
+# - IPython.display (exibição em notebooks Jupyter)
+#
+# BIBLIOTECAS PADRÃO DO PYTHON (já incluídas):
+# - json (manipulação de JSON)
+# - re (expressões regulares)  
+# - collections (Counter, defaultdict)
+# - itertools (combinations)
+# - os (sistema operacional)
+# - sys (sistema Python)
+# - subprocess (execução de processos)
+#
+# DEPENDÊNCIAS OPCIONAIS (para melhor performance e compatibilidade):
+# openpyxl>=3.0.0     # Para leitura/escrita Excel (se necessário)
+# xlrd>=2.0.0         # Para arquivos Excel legados (se necessário)
+# scikit-learn>=1.0.0 # Para machine learning (se expandir análise)
+#
+# ========================================================================
+# 
+# TOTAL DE DEPENDÊNCIAS PRINCIPAIS: 12
+# ÚLTIMA ATUALIZAÇÃO: Baseado na varredura completa do notebook
+# ========================================================================
